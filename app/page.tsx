@@ -16,7 +16,8 @@ function GameRouter({
 }) {
   const { gameStatus } = useQuiz();
 
-  if (gameStatus === 'playing') return <GameView />;
+  if (gameStatus === 'playing')
+    return <GameView onRestart={onRestart} onMainMenu={onMainMenu} />;
   if (gameStatus === 'won')
     return <ResultScreen onRestart={onRestart} onMainMenu={onMainMenu} />;
   return null;
@@ -36,14 +37,14 @@ export default function Home() {
   return (
     <RoleProvider>
       <QuizProvider key={`${mode}-${gameKey}`} mode={mode ?? undefined}>
-        <div className="flex flex-col items-center min-h-screen bg-zinc-900 select-none px-4 pt-6 pb-4">
+        <div className="flex flex-col items-center min-h-screen bg-zinc-900 select-none px-2 pt-2 pb-2">
           {!mode && (
-            <div className="flex flex-col items-center w-full max-w-[min(85vw,85vh)] overflow-hidden flex-1 justify-center">
+            <div className="flex flex-col items-center w-full max-w-[min(95vw,95vh)] overflow-hidden flex-1 justify-center">
               <StartScreen onStart={handleStart} />
             </div>
           )}
           {mode && (
-            <div className="flex flex-col items-center w-full max-w-[min(85vw,85vh)] overflow-hidden flex-1">
+            <div className="flex flex-col items-center w-full max-w-[min(95vw,95vh)] overflow-hidden flex-1">
               <GameRouter
                 onRestart={handleRestart}
                 onMainMenu={handleMainMenu}

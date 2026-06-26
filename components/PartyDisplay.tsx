@@ -66,17 +66,17 @@ const PartyDisplay = memo(function PartyDisplay() {
         if (changed.size > 0) {
           // Mostra só as que mudaram por 1.5s, depois esconde tudo
           setHidden(false);
-          const timer = setTimeout(() => setHidden(true), 1500);
+          const timer = setTimeout(() => setHidden(true), 2000);
           return () => clearTimeout(timer);
         } else {
           // Nada mudou — já esconde
           setHidden(true);
         }
       } else {
-        // Primeira vez — todas são "novas", mostra tudo por 1.5s
+        // Primeira vez — todas são "novas", mostra tudo por 2s
         setChangedRoles(new Set(Object.keys(assignments ?? {}) as Role[]));
         setHidden(false);
-        const timer = setTimeout(() => setHidden(true), 1500);
+        const timer = setTimeout(() => setHidden(true), 2000);
         return () => clearTimeout(timer);
       }
 
@@ -98,22 +98,22 @@ const PartyDisplay = memo(function PartyDisplay() {
   }));
 
   return (
-    <div className="flex items-center justify-center gap-4 px-4 py-3 rounded-lg bg-black/70 ring-1 ring-white/15">
+    <div className="flex items-center justify-center gap-5 px-5 py-4 rounded-lg bg-black/70 ring-1 ring-white/15">
       {members.map(({ roleName, sigla }) => {
         const mechanic = assignments[sigla];
         return (
-          <div key={sigla} className="flex flex-col items-center gap-1">
+          <div key={sigla} className="flex flex-col items-center gap-1.5">
             <div className="flex items-center gap-2 text-zinc-300">
               <Image
                 src={ROLE_ICONS[roleName]}
                 alt={roleName}
-                width={20}
-                height={20}
+                width={24}
+                height={24}
                 className="pointer-events-none shrink-0"
                 unoptimized
               />
-              <span className="text-xs font-mono">{roleName}</span>
-              <span className="text-[9px] font-mono uppercase tracking-wider opacity-50">
+              <span className="text-sm font-mono">{roleName}</span>
+              <span className="text-xs font-mono uppercase tracking-wider opacity-50">
                 {sigla}
               </span>
             </div>
@@ -122,8 +122,8 @@ const PartyDisplay = memo(function PartyDisplay() {
                 <Image
                   src={MECHANIC_ICONS[mechanic]}
                   alt={mechanic}
-                  width={48}
-                  height={48}
+                  width={56}
+                  height={56}
                   className="pointer-events-none"
                   unoptimized
                 />
@@ -131,7 +131,7 @@ const PartyDisplay = memo(function PartyDisplay() {
             {mechanic &&
               mode === 'dificil' &&
               (hidden || !changedRoles.has(sigla)) && (
-                <span className="text-2xl font-mono font-bold text-zinc-500">
+                <span className="w-14 h-14 flex items-center justify-center text-4xl font-mono font-bold text-zinc-500">
                   ?
                 </span>
               )}

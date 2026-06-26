@@ -1,5 +1,6 @@
 'use client';
 
+import { ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRole } from '@/context/RoleContext';
 
@@ -40,19 +41,9 @@ export default function RoleSelector() {
         <span>
           {role ? `${selected?.nome} (${role})` : 'Selecione sua role'}
         </span>
-        <svg
+        <ChevronDown
           className={`w-3.5 h-3.5 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        />
       </button>
 
       {open && (

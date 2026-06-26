@@ -31,7 +31,6 @@ export default function PositionButtons({
     null,
   );
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockedRef = useRef(false);
 
   // Garante que lockedRef acompanhe locked
@@ -42,17 +41,28 @@ export default function PositionButtons({
   // Timer do modo difícil
   useEffect(() => {
     if (mode === 'dificil' && !locked) {
-      setTimeLeft(5);
-
       const interval = setInterval(() => {
         setTimeLeft((prev) => {
-          if (prev === null || prev <= 1) {
+          if (prev === null) return 4;
+          if (prev <= 1) {
             clearInterval(interval);
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+
+      // Calcula a posição correta para o timeout
+      const lp = lightParties![role!];
+      const inside = isPlayerInside(towerNumber, lp);
+      const mechanic = assignments![role!];
+      const expectedPos = getCorrectPosition(
+        role!,
+        mechanic,
+        inside,
+        towerNumber,
+        assignments!,
+      );
 
       const timeout = setTimeout(() => {
         if (!lockedRef.current) {
@@ -64,7 +74,7 @@ export default function PositionButtons({
             towerNumber,
             correct: false,
             clickedPosition: 'timeout',
-            expectedPosition: correctPosRef.current,
+            expectedPosition: expectedPos,
           });
 
           setTimeout(() => {
@@ -85,12 +95,18 @@ export default function PositionButtons({
         clearInterval(interval);
         clearTimeout(timeout);
       };
-    } else if (mode !== 'dificil') {
-      setTimeLeft(null);
     }
-  }, [mode, towerNumber, locked, addAnswer, advanceTower, onShowOverview]);
-
-  const correctPosRef = useRef<PositionKey | null>(null);
+  }, [
+    mode,
+    towerNumber,
+    locked,
+    addAnswer,
+    advanceTower,
+    onShowOverview,
+    role,
+    lightParties,
+    assignments,
+  ]);
 
   const handleClick = useCallback(
     (key: PositionKey, correctPos: PositionKey | null) => {
@@ -152,12 +168,11 @@ export default function PositionButtons({
     towerNumber,
     assignments,
   );
-  correctPosRef.current = correctPos;
 
   return (
     <>
       {lastResult && (
-        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 z-20">
           <div
             className={`px-4 py-1.5 rounded-md text-sm font-mono font-bold ${
               lastResult === 'correct'
@@ -171,9 +186,9 @@ export default function PositionButtons({
       )}
 
       {timeLeft !== null && !lastResult && (
-        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 z-20">
           <div className="px-3 py-1 rounded-md bg-black/70 ring-1 ring-white/15 text-zinc-300 text-sm font-mono tabular-nums">
-            {timeLeft}s
+            {timeLeft ?? 5}s
           </div>
         </div>
       )}
