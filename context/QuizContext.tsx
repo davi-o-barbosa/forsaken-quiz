@@ -36,6 +36,7 @@ interface QuizContextType {
   lightParties: Record<Role, 'A' | 'B'> | null;
   gameStatus: GameStatus;
   answers: Answer[];
+  mode: string | null;
   advanceTower: () => void;
   addAnswer: (answer: Answer) => void;
 }
@@ -75,7 +76,13 @@ function computeLightParties(
   return result;
 }
 
-function QuizProviderInner({ children }: { children: ReactNode }) {
+function QuizProviderInner({
+  children,
+  mode,
+}: {
+  children: ReactNode;
+  mode: string;
+}) {
   const [towerNumber, setTowerNumber] = useState(1);
   const [currentAssignments, setCurrentAssignments] = useState<Record<
     Role,
@@ -128,6 +135,7 @@ function QuizProviderInner({ children }: { children: ReactNode }) {
         lightParties,
         gameStatus,
         answers,
+        mode,
         advanceTower,
         addAnswer,
       }}
@@ -155,6 +163,7 @@ export function QuizProvider({
           lightParties: null,
           gameStatus: 'idle',
           answers: [],
+          mode: null,
           advanceTower: () => {},
           addAnswer: () => {},
         }}
@@ -163,7 +172,11 @@ export function QuizProvider({
       </QuizContext.Provider>
     );
 
-  return <QuizProviderInner key={role}>{children}</QuizProviderInner>;
+  return (
+    <QuizProviderInner key={role} mode={_mode}>
+      {children}
+    </QuizProviderInner>
+  );
 }
 
 export function useQuiz() {

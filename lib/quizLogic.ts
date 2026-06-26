@@ -1,6 +1,6 @@
 import type { Role } from "@/context/RoleContext";
 import type { Mechanic } from "@/context/QuizContext";
-import { POSITIONS } from "@/data/positions";
+import { type PositionKey } from "@/data/positions";
 
 export const DUOS: [Role, Role][] = [
   ["MT", "H1"],
@@ -71,7 +71,7 @@ export function getOddTowerPosition(
   mechanic: Mechanic,
   insideParty: boolean,
   assignments: Record<Role, Mechanic>,
-): keyof typeof POSITIONS | null {
+): PositionKey | null {
   if (!insideParty) {
     if (isDPS(role)) return "ODD_OUTSIDE_STACK_2";
     if (isTank(role)) return "ODD_OUTSIDE_STACK_1";
@@ -97,7 +97,7 @@ export function getEvenTowerPosition(
   mechanic: Mechanic,
   insideParty: boolean,
   assignments: Record<Role, Mechanic>,
-): keyof typeof POSITIONS | null {
+): PositionKey | null {
   if (!insideParty) {
     if (isRanged(role)) return "EVEN_OUTSIDE_CONE_BAITER_2";
     if (isMelee(role)) return "EVEN_OUTSIDE_NORTH_2";
@@ -118,7 +118,9 @@ export function getEvenTowerPosition(
 
   if (mechanic === "stack") {
     const suffix = resolvePrioritySuffix(role, mechanic, assignments);
-    return suffix === "1" ? "EVEN_INSIDE_TOWER_STACK_1" : "EVEN_INSIDE_TOWER_STACK_2";
+    return (suffix === "1"
+      ? "EVEN_INSIDE_TOWER_STACK_1"
+      : "EVEN_INSIDE_TOWER_STACK_2") as PositionKey;
   }
 
   return null;
@@ -145,7 +147,7 @@ export function getCorrectPosition(
   insideParty: boolean,
   towerNumber: number,
   assignments: Record<Role, Mechanic>,
-): keyof typeof POSITIONS | null {
+): PositionKey | null {
   const isOdd = towerNumber % 2 !== 0;
   if (isOdd) {
     return getOddTowerPosition(role, mechanic, insideParty, assignments);

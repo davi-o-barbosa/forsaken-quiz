@@ -2,6 +2,7 @@ interface ModeButtonProps {
   color: 'orange' | 'red';
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 const ICONS = {
@@ -50,16 +51,27 @@ const COLOR_CLASSES = {
   },
 } as const;
 
-export default function ModeButton({ color, label, onClick }: ModeButtonProps) {
+export default function ModeButton({
+  color,
+  label,
+  onClick,
+  disabled,
+}: ModeButtonProps) {
   const cls = COLOR_CLASSES[color];
 
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-2 w-32 h-32 rounded-xl ring-2 transition-all ${cls.bg} ${cls.ring}`}
+      disabled={disabled}
+      suppressHydrationWarning
+      className={`flex flex-col items-center justify-center gap-2 w-32 h-32 rounded-xl ring-2 transition-all ${disabled ? 'opacity-40 cursor-not-allowed ring-white/10' : `${cls.bg} ${cls.ring}`}`}
     >
-      {ICONS[color]}
-      <span className={`text-sm font-mono font-bold ${cls.text}`}>{label}</span>
+      <div className={disabled ? 'opacity-50' : ''}>{ICONS[color]}</div>
+      <span
+        className={`text-sm font-mono font-bold ${disabled ? 'text-zinc-500' : cls.text}`}
+      >
+        {label}
+      </span>
     </button>
   );
 }

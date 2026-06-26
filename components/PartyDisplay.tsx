@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRole, type Role } from '@/context/RoleContext';
 import { useQuiz } from '@/context/QuizContext';
@@ -44,24 +44,62 @@ function getPartyRole(roleName: RoleName, party: 1 | 2): Role {
 
 const PartyDisplay = memo(function PartyDisplay() {
   const { role } = useRole();
-  const { assignments } = useQuiz();
+  const { assignments, mode } = useQuiz();
+  const [hidden, setHidden] = useState(false);
+  const [changedRoles, setChangedRoles] = useState<Set<Role>>(new Set());
+  const prevAssignmentsRef = useRef<Record<Role, string> | null>(null);
+
+  useEffect(() => {
+    if (mode === 'dificil') {
+      const prev = prevAssignmentsRef.current;
+
+      if (prev) {
+        // Quais roles tiveram a mecânica alterada?
+        const changed = new Set<Role>();
+        for (const r of Object.keys(assignments ?? {}) as Role[]) {
+          if (assignments?.[r] !== prev[r]) {
+            changed.add(r);
+          }
+        }
+        setChangedRoles(changed);
+
+        if (changed.size > 0) {
+          // Mostra só as que mudaram por 1.5s, depois esconde tudo
+          setHidden(false);
+          const timer = setTimeout(() => setHidden(true), 1500);
+          return () => clearTimeout(timer);
+        } else {
+          // Nada mudou — já esconde
+          setHidden(true);
+        }
+      } else {
+        // Primeira vez — todas são "novas", mostra tudo por 1.5s
+        setChangedRoles(new Set(Object.keys(assignments ?? {}) as Role[]));
+        setHidden(false);
+        const timer = setTimeout(() => setHidden(true), 1500);
+        return () => clearTimeout(timer);
+      }
+
+      prevAssignmentsRef.current = assignments;
+    } else {
+      setHidden(false);
+      setChangedRoles(new Set());
+      prevAssignmentsRef.current = null;
+    }
+  }, [mode, assignments]);
 
   if (!role || !assignments) return null;
 
   const party = getPartyNumber(role);
-  const playerRoleName = ROLE_ORDER.find(
-    (r) => getPartyRole(r, party) === role,
-  )!;
 
   const members = ROLE_ORDER.map((roleName) => ({
     roleName,
     sigla: getPartyRole(roleName, party),
-    isPlayer: roleName === playerRoleName,
   }));
 
   return (
     <div className="flex items-center justify-center gap-4 px-4 py-3 rounded-lg bg-black/70 ring-1 ring-white/15">
-      {members.map(({ roleName, sigla, isPlayer }) => {
+      {members.map(({ roleName, sigla }) => {
         const mechanic = assignments[sigla];
         return (
           <div key={sigla} className="flex flex-col items-center gap-1">
@@ -79,16 +117,24 @@ const PartyDisplay = memo(function PartyDisplay() {
                 {sigla}
               </span>
             </div>
-            {mechanic && (
-              <Image
-                src={MECHANIC_ICONS[mechanic]}
-                alt={mechanic}
-                width={48}
-                height={48}
-                className="pointer-events-none"
-                unoptimized
-              />
-            )}
+            {mechanic &&
+              (mode !== 'dificil' || (!hidden && changedRoles.has(sigla))) && (
+                <Image
+                  src={MECHANIC_ICONS[mechanic]}
+                  alt={mechanic}
+                  width={48}
+                  height={48}
+                  className="pointer-events-none"
+                  unoptimized
+                />
+              )}
+            {mechanic &&
+              mode === 'dificil' &&
+              (hidden || !changedRoles.has(sigla)) && (
+                <span className="text-2xl font-mono font-bold text-zinc-500">
+                  ?
+                </span>
+              )}
           </div>
         );
       })}

@@ -2,12 +2,15 @@
 
 import RoleSelector from '@/components/RoleSelector';
 import ModeButton from '@/components/ModeButton';
+import { useRole } from '@/context/RoleContext';
 
 export default function StartScreen({
   onStart,
 }: {
   onStart: (mode: string) => void;
 }) {
+  const { role } = useRole();
+
   return (
     <div className="flex flex-col items-center justify-center gap-6 flex-1 min-h-0">
       <div className="flex flex-col items-center gap-1">
@@ -26,11 +29,13 @@ export default function StartScreen({
           color="orange"
           label="TREINO"
           onClick={() => onStart('treino')}
+          disabled={!role}
         />
         <ModeButton
           color="red"
           label="DIFÍCIL"
           onClick={() => onStart('dificil')}
+          disabled={!role}
         />
       </div>
     </div>

@@ -1,22 +1,25 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useQuiz } from '@/context/QuizContext';
 import { useRole } from '@/context/RoleContext';
-import { POSITIONS, type PositionKey } from '@/data/positions';
+import { POSITIONS, ARENA_SIZE, type PositionKey } from '@/data/positions';
 import { getCorrectPosition, isPlayerInside } from '@/lib/quizLogic';
-
-const ARENA_SIZE = 4000;
 
 type ButtonState = 'default' | 'correct' | 'wrong';
 
-export default function PositionButtons() {
+export default function PositionButtons({
+  onShowOverview,
+}: {
+  onShowOverview?: (tower: number) => void;
+}) {
   const { role } = useRole();
   const {
     assignments,
     towerNumber,
     lightParties,
     gameStatus,
+    mode,
     advanceTower,
     addAnswer,
   } = useQuiz();
@@ -27,6 +30,67 @@ export default function PositionButtons() {
   const [lastResult, setLastResult] = useState<'correct' | 'wrong' | null>(
     null,
   );
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lockedRef = useRef(false);
+
+  // Garante que lockedRef acompanhe locked
+  useEffect(() => {
+    lockedRef.current = locked;
+  }, [locked]);
+
+  // Timer do modo difícil
+  useEffect(() => {
+    if (mode === 'dificil' && !locked) {
+      setTimeLeft(5);
+
+      const interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      const timeout = setTimeout(() => {
+        if (!lockedRef.current) {
+          setLocked(true);
+          setLastResult('wrong');
+          setTimeLeft(null);
+
+          addAnswer({
+            towerNumber,
+            correct: false,
+            clickedPosition: 'timeout',
+            expectedPosition: correctPosRef.current,
+          });
+
+          setTimeout(() => {
+            setButtonStates({});
+            setLastResult(null);
+            setLocked(false);
+            setTimeLeft(null);
+            if (onShowOverview) {
+              onShowOverview(towerNumber);
+            } else {
+              advanceTower();
+            }
+          }, 1200);
+        }
+      }, 5000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    } else if (mode !== 'dificil') {
+      setTimeLeft(null);
+    }
+  }, [mode, towerNumber, locked, addAnswer, advanceTower, onShowOverview]);
+
+  const correctPosRef = useRef<PositionKey | null>(null);
 
   const handleClick = useCallback(
     (key: PositionKey, correctPos: PositionKey | null) => {
@@ -54,14 +118,15 @@ export default function PositionButtons() {
         setButtonStates({});
         setLastResult(null);
         setLocked(false);
-        advanceTower();
+        if (onShowOverview) {
+          onShowOverview(towerNumber);
+        } else {
+          advanceTower();
+        }
       }, 1200);
     },
-    [locked, towerNumber, advanceTower, addAnswer],
+    [locked, towerNumber, advanceTower, addAnswer, onShowOverview],
   );
-
-  if (!assignments || !role || !lightParties || gameStatus !== 'playing')
-    return null;
 
   const isOdd = towerNumber % 2 !== 0;
   const prefix = isOdd ? 'ODD_' : 'EVEN_';
@@ -74,6 +139,9 @@ export default function PositionButtons() {
     [prefix],
   );
 
+  if (!assignments || !role || !lightParties || gameStatus !== 'playing')
+    return null;
+
   const lightParty = lightParties[role];
   const inside = isPlayerInside(towerNumber, lightParty);
   const myMechanic = assignments[role];
@@ -84,11 +152,12 @@ export default function PositionButtons() {
     towerNumber,
     assignments,
   );
+  correctPosRef.current = correctPos;
 
   return (
     <>
       {lastResult && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-20">
           <div
             className={`px-4 py-1.5 rounded-md text-sm font-mono font-bold ${
               lastResult === 'correct'
@@ -97,6 +166,14 @@ export default function PositionButtons() {
             }`}
           >
             {lastResult === 'correct' ? '✓ Correto!' : '✗ Errado!'}
+          </div>
+        </div>
+      )}
+
+      {timeLeft !== null && !lastResult && (
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-20">
+          <div className="px-3 py-1 rounded-md bg-black/70 ring-1 ring-white/15 text-zinc-300 text-sm font-mono tabular-nums">
+            {timeLeft}s
           </div>
         </div>
       )}
